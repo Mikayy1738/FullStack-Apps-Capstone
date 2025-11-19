@@ -15,16 +15,6 @@ app.use(async (req, res,  next) => {
   next();
 })
 
-app.post("/test/:table", async (req, res) => {
-  await db.insertOne(req.params.table, req.body);
-  res.sendStatus(201);
-})
-
-app.get("/test/:table/:id", async (req, res) => {
-  const data = await db.findOne(req.params.table, (val) => val.id === req.params.id);
-  res.send(data)
-})
-
 ViteExpress.listen(app, 3000, () =>
   console.log("Server is listening on port 3000..."),
 );

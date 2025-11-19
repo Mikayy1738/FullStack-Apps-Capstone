@@ -58,6 +58,4 @@ export class fsAdapter {
         await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from("[]")));
     }
   }
-
-  snapshot(){}
 }
