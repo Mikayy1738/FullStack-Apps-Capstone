@@ -54,7 +54,9 @@ export class fsAdapter {
       })
   }
   async reset(){
-    await this.#createFiles();
+    for (let tableName of this.#tables){
+        await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from("[]")));
+    }
   }
 
   snapshot(){}
