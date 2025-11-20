@@ -1,34 +1,23 @@
 import { Router } from "express";
-import { PrismaClient } from "../../../generated/prisma/client.ts";
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
+import * as db from '../database/index.js'
 
 const userAPI = Router();
 
 userAPI.post("/create", async (req, res) => {
+  const {password, username, email} = req.body;
   try {
-    const prisma = new PrismaClient();
-    const { username, email, password } = req.body;
-    if (!username || !email || !password ) {
-      res.status(400).json({error: "username, email, and password required"});
+    const presentUser = await db.findMany('user', (val) => val.username === username || val.email === email);
+    if (presentUser.length){
+      res.sendStatus(409);
       return;
     }
-    await prisma.user.create({
-      data:{
-        username,
-        email,
-        password: await bcrypt.hash(password, 10)
-      }
-    })
+    await db.insertOne('user', {username, email, password : await bcrypt.hash(password, 10)});
     res.sendStatus(201);
   }
-  catch (error) {
-    console.log(error.message)
-    if (error.code === "P2002"){
-      res.status(409).json({error: "user already exists"});
-    }
-    else {
-      res.sendStatus(500);
-    }
+  catch(e){
+    console.log(e.message);
+    res.sendStatus(500);
   }
 })
 
