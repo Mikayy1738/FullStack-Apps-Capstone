@@ -34,7 +34,8 @@ userAPI.post("/login", async (req, res) => {
       res.sendStatus(401);
       return;
     }
-    res.send({...user, password: undefined});
+    const session = await db.insertOne("session", {user: user.id});
+    res.cookie("VenueReviewSessionID", session.id).send({...user, password: undefined});
   }
   catch(e){
     console.log(e.message);

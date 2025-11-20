@@ -26,7 +26,7 @@ export class fsAdapter {
   async #createFiles() {
     for (let tableName of this.#tables){
       try{
-        await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from("[]")), {flag:"wx"});
+        await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from("[\"init\"]")), {flag:"wx"});
       }
       catch(e){
         if (e.code !== 'EEXIST'){

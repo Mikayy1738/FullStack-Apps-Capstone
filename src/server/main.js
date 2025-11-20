@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 
 //db setup middleware
 app.use(async (req, res,  next) => {
-  db.useAdapter(new fsAdapter(["user"]));
+  db.useAdapter(new fsAdapter(["user", "session"]));
   await db.boot();
   next();
 })
