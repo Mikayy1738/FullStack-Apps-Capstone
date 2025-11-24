@@ -26,6 +26,9 @@ export async function transact(mutatorFn) {
 // Write
 export const insertOne = async (col, data) => {
   const d = getDoc();
+  if (!d[col]) {
+    d[col] = [];
+  }
   const rec = {id: uid(), ...data}
   d[col].push(rec);
   await _adapter.save(d);
@@ -39,11 +42,19 @@ export const getDoc = () => {
 }
 
 export const findMany = (col, pred = () => true) => {
-  return getDoc()[col].filter(pred);
+  const doc = getDoc();
+  if (!doc[col]) {
+    return [];
+  }
+  return doc[col].filter(pred);
 }
 
 export const findOne = (col, pred) => {
-  return getDoc()[col].filter(pred)[0] || null;
+  const doc = getDoc();
+  if (!doc[col]) {
+    return null;
+  }
+  return doc[col].filter(pred)[0] || null;
 }
 
 export function project(row, fields) {
@@ -93,6 +104,9 @@ export function find(col, { filter={}, sort=null, limit=null, skip=0, fields=nul
 // Update
 export const updateOne = async (col, id, patch) => {
   const d = getDoc();
+  if (!d[col]) {
+    return 0;
+  }
   const i = d[col].findIndex(r => r.id === id);
   if (i === -1) {return 0};
   d[col][i] = { ...d[col][i], ...patch };

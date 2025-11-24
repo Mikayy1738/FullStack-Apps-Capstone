@@ -15,22 +15,27 @@ export class fsAdapter {
   async #readTable(tableName) {
     try{ 
       const data = await fs.readFile(`${this.#filePrefix}${tableName}.txt`);
-      return JSON.parse(data)
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(item => item !== "init");
+      }
+      return parsed;
     }
     catch (e) {
       console.log(`Error reading table ${tableName} : ${e.message}`)
-      return null;
+      return [];
     }
   } 
 
   async #createFiles() {
     for (let tableName of this.#tables){
       try{
-        await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from("[\"init\"]")), {flag:"wx"});
+        await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from("[]")), {flag:"wx"});
+        console.log(`Created database file: ${tableName}.txt`);
       }
       catch(e){
         if (e.code !== 'EEXIST'){
-          console.log(e.message);
+          console.log(`Error creating ${tableName}.txt: ${e.message}`);
         }
       }
     }
@@ -41,14 +46,23 @@ export class fsAdapter {
     const data = {}
     for (let tableName of this.#tables) {
       let table = await this.#readTable(tableName);
-      data[tableName] = table;
+      data[tableName] = Array.isArray(table) ? table : [];
     }
     return data;
   }
 
   async save(d){
     for(let tableName of this.#tables){
-      await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from(JSON.stringify(d[tableName]))))
+      try {
+        if (!d[tableName]) {
+          console.log(`Warning: Table ${tableName} not found in data object`);
+          d[tableName] = [];
+        }
+        await fs.writeFile(`${this.#filePrefix}${tableName}.txt`, new Uint8Array(Buffer.from(JSON.stringify(d[tableName]))));
+      } catch (e) {
+        console.log(`Error saving ${tableName}.txt: ${e.message}`);
+        throw e;
+      }
     }
   }
   async reset(){

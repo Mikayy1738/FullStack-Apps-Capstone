@@ -12,8 +12,10 @@ userAPI.post("/create", async (req, res) => {
       res.sendStatus(409);
       return;
     }
-    await db.insertOne('user', {username, email, password : await bcrypt.hash(password, 10)});
-    res.sendStatus(201);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await db.insertOne('user', {username, email, password: hashedPassword});
+    const session = await db.insertOne("session", {user: user.id});
+    res.cookie("VenueReviewSessionID", session.id).send({...user, password: undefined});
   }
   catch(e){
     console.log(e.message);
@@ -36,6 +38,45 @@ userAPI.post("/login", async (req, res) => {
     }
     const session = await db.insertOne("session", {user: user.id});
     res.cookie("VenueReviewSessionID", session.id).send({...user, password: undefined});
+  }
+  catch(e){
+    console.log(e.message);
+    res.sendStatus(500);
+  }
+})
+
+userAPI.get("/me", async (req, res) => {
+  try {
+    const sessionId = req.cookies?.VenueReviewSessionID;
+    if (!sessionId) {
+      res.sendStatus(401);
+      return;
+    }
+    const session = await db.findOne('session', (s) => s.id === sessionId);
+    if (!session) {
+      res.sendStatus(401);
+      return;
+    }
+    const user = await db.findOne('user', (u) => u.id === session.user);
+    if (!user) {
+      res.sendStatus(401);
+      return;
+    }
+    res.send({...user, password: undefined});
+  }
+  catch(e){
+    console.log(e.message);
+    res.sendStatus(500);
+  }
+})
+
+userAPI.post("/logout", async (req, res) => {
+  try {
+    const sessionId = req.cookies?.VenueReviewSessionID;
+    if (sessionId) {
+      await db.deleteOne('session', sessionId);
+    }
+    res.clearCookie("VenueReviewSessionID").sendStatus(200);
   }
   catch(e){
     console.log(e.message);

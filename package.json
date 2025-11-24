@@ -11,13 +11,18 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
+    "cookie-parser": "^1.4.7",
     "cross-env": "^7.0.3",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
+    "qrcode": "^1.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
     "vite-express": "*"
   },
   "devDependencies": {

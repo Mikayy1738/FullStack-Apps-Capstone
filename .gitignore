@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 /src/server/database/files/*.txt
 /src/server/tests/dbFiles/*.txt
+HerokuTouchApp
