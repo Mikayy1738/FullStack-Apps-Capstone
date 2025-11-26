@@ -56,6 +56,20 @@ venuesAPI.get("/", async (req, res) => {
         photos: place.photos
       };
     });
+
+    const venuesWithTags = [];
+
+    for (let venue of venuesWithStats){
+      let dbVenue = await db.findOneBy('venue', {id: venue.id});
+      if (!dbVenue){
+        dbVenue = await db.insertOne('venue', {...venue, tags: []});
+      }
+      else{
+        const mapTags = dbVenue.tags.map(async (t) => await db.findOneBy('tag', {id: t.id}));
+        await Promise.all(mapTags)
+      }
+      venuesWithTags.push(dbVenue);
+    }
     
     res.send(venuesWithStats);
   } catch (e) {

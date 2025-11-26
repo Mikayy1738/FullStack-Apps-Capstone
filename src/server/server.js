@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import ViteExpress from "vite-express";
 import makeApp from './app.js';
 
-const app = makeApp(["user", "session", "review"]);
+const app = makeApp(["user", "session", "review", "tag", "venue"]);
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
