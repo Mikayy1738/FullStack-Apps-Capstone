@@ -56,6 +56,11 @@ tagAPI.put('/add', async (req, res) => {
     console.log(e.message);
     res.sendStatus(500);
   }
+});
+
+tagAPI.get("/list", async (req, res) => {
+  const tagList = await db.findManyBy("tag");
+  res.send(tagList);
 })
 
 export default tagAPI;
