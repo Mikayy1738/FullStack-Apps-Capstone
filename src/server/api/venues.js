@@ -62,16 +62,18 @@ venuesAPI.get("/", async (req, res) => {
     for (let venue of venuesWithStats){
       let dbVenue = await db.findOneBy('venue', {id: venue.id});
       if (!dbVenue){
-        dbVenue = await db.insertOne('venue', {...venue, tags: []});
+        dbVenue = await db.insertOne('venue', {...venue, tagIDs: []});
       }
       else{
-        const mapTags = dbVenue.tags.map(async (t) => await db.findOneBy('tag', {id: t.id}));
-        await Promise.all(mapTags)
+        dbVenue.tags = [];
+        for( let tagID of dbVenue.tagIDs){
+          dbVenue.tags.push(await db.findOneBy('tag', {id: tagID}));
+        }
       }
       venuesWithTags.push(dbVenue);
     }
     
-    res.send(venuesWithStats);
+    res.send(venuesWithTags);
   } catch (e) {
     console.log(e.message);
     res.sendStatus(500);

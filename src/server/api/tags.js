@@ -21,4 +21,41 @@ tagAPI.post('/create', async (req, res) => {
   }
 })
 
+tagAPI.put('/add', async (req, res) => {
+  const {venueID, tagID} = req.body;
+  try {
+    const dbTag = await db.findOneBy('tag', {id: tagID});
+    if (!dbTag){
+      res.sendStatus(404);
+      return;
+    }
+    if (dbTag.venueIDs.includes(venueID)){
+      res.sendStatus(409);
+      return;
+    }
+    const dbVenue = await db.findOneBy('venue', {id: venueID});
+    if (!dbVenue){
+      res.sendStatus(404);
+      return;
+    }
+    if (dbVenue.tagIDs.includes(tagID)){
+      res.sendStatus(409);
+      return;
+    }
+    await db.transact((doc) => {
+      console.log(doc.tag)
+      const venueIndex = doc.venue.findIndex(venue => venue.id === venueID);
+      doc.venue[venueIndex].tagIDs.push(tagID);
+      
+      const tagIndex = doc.tag.findIndex(tag => tag.id === tagID);
+      doc.tag[tagIndex].venueIDs.push(venueID);
+    });
+    res.sendStatus(201);
+  }
+  catch(e){
+    console.log(e.message);
+    res.sendStatus(500);
+  }
+})
+
 export default tagAPI;
