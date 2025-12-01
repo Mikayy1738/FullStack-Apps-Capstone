@@ -25,10 +25,15 @@ function AuthPage({ onLogin }) {
     setLoading(true);
 
     try {
+      const form = e.target;
+      const emailValue = form.email ? form.email.value : formData.email;
+      const passwordValue = form.password ? form.password.value : formData.password;
+      const usernameValue = form.username ? form.username.value : formData.username;
+
       const endpoint = isLogin ? "/api/user/login" : "/api/user/create";
       const body = isLogin 
-        ? { email: formData.email, password: formData.password }
-        : { username: formData.username, email: formData.email, password: formData.password };
+        ? { email: emailValue, password: passwordValue }
+        : { username: usernameValue, email: emailValue, password: passwordValue };
 
       const response = await fetch(endpoint, {
         method: "POST",

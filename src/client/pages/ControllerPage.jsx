@@ -12,6 +12,9 @@ function ControllerPage() {
   const lastTouchRef = useRef({ x: 0, y: 0 });
   const hasMovedRef = useRef(false);
   const touchStartPosRef = useRef({ x: 0, y: 0 });
+  const keyboardInputRef = useRef(null);
+  const isScrollingRef = useRef(false);
+  const lastTwoFingerPosRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -56,7 +59,22 @@ function ControllerPage() {
     e.preventDefault();
     if (!socket || !connected) return;
     
+    const touchCount = e.touches.length;
+    
+    if (touchCount === 2) {
+      isScrollingRef.current = true;
+      isTouchingRef.current = false;
+      const rect = touchPadRef.current.getBoundingClientRect();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const midX = ((touch1.clientX + touch2.clientX) / 2) - rect.left;
+      const midY = ((touch1.clientY + touch2.clientY) / 2) - rect.top;
+      lastTwoFingerPosRef.current = { x: midX, y: midY };
+      return;
+    }
+    
     isTouchingRef.current = true;
+    isScrollingRef.current = false;
     hasMovedRef.current = false;
     const touch = e.touches[0];
     const rect = touchPadRef.current.getBoundingClientRect();
@@ -71,7 +89,33 @@ function ControllerPage() {
 
   const handleTouchMove = (e) => {
     e.preventDefault();
-    if (!socket || !connected || !isTouchingRef.current) return;
+    if (!socket || !connected) return;
+    
+    const touchCount = e.touches.length;
+    
+    if (touchCount === 2 && isScrollingRef.current) {
+      const rect = touchPadRef.current.getBoundingClientRect();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const midX = ((touch1.clientX + touch2.clientX) / 2) - rect.left;
+      const midY = ((touch1.clientY + touch2.clientY) / 2) - rect.top;
+      
+      const deltaX = midX - lastTwoFingerPosRef.current.x;
+      const deltaY = midY - lastTwoFingerPosRef.current.y;
+      
+      if (Math.abs(deltaX) > 0 || Math.abs(deltaY) > 0) {
+        socket.emit("scroll", {
+          roomId: roomCode,
+          deltaX: deltaX,
+          deltaY: deltaY
+        });
+      }
+      
+      lastTwoFingerPosRef.current = { x: midX, y: midY };
+      return;
+    }
+    
+    if (!isTouchingRef.current) return;
     
     const touch = e.touches[0];
     const rect = touchPadRef.current.getBoundingClientRect();
@@ -106,10 +150,17 @@ function ControllerPage() {
     e.preventDefault();
     if (!socket || !connected) return;
     
-    if (isTouchingRef.current) {
-      // Only emit tap if there was no significant movement (it was a tap, not a drag)
+    if (e.touches.length === 0) {
+      isScrollingRef.current = false;
+    }
+    
+    if (isTouchingRef.current && e.touches.length === 0) {
       if (!hasMovedRef.current) {
         socket.emit("tap", { roomId: roomCode });
+        if (keyboardInputRef.current) {
+          keyboardInputRef.current.focus();
+          keyboardInputRef.current.value = "";
+        }
       }
       isTouchingRef.current = false;
       hasMovedRef.current = false;
@@ -118,6 +169,8 @@ function ControllerPage() {
 
   const handleKeyPress = (e) => {
     if (!socket || !connected) return;
+
+    e.preventDefault();
     
     let key = e.key;
     if (key === "Enter") {
@@ -134,13 +187,23 @@ function ControllerPage() {
   };
 
   useEffect(() => {
-    if (connected) {
-      window.addEventListener("keydown", handleKeyPress);
-      return () => {
-        window.removeEventListener("keydown", handleKeyPress);
-      };
-    }
-  }, [connected, roomCode, socket]);
+    if (!socket) return;
+
+    const handleFocusChange = (focusInfo) => {
+      if (!keyboardInputRef.current) return;
+      if (focusInfo && focusInfo.selector) {
+        keyboardInputRef.current.focus();
+        keyboardInputRef.current.value = "";
+      } else {
+        keyboardInputRef.current.blur();
+      }
+    };
+
+    socket.on("focus_change", handleFocusChange);
+    return () => {
+      socket.off("focus_change", handleFocusChange);
+    };
+  }, [socket]);
 
   return (
     <div className="controller-page">
@@ -171,12 +234,24 @@ function ControllerPage() {
           >
             <div className="touch-pad-instructions">
               Touch and drag to move cursor
-              <br />
+              <br /> 
               Release to tap
-              <br />
+              <br /> 
+              Two fingers to scroll
+              <br /> 
               Type to input text
             </div>
           </div>
+          <input
+            ref={keyboardInputRef}
+            type="text"
+            className="controller-keyboard-input"
+            onKeyDown={handleKeyPress}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck="false"
+          />
           <div className="controller-controls">
             <button
               onClick={() => {

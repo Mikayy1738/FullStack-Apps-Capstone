@@ -415,30 +415,22 @@ export function useRemoteControl() {
         (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA")
       ) {
         const inputElement = activeElement;
-        const start = inputElement.selectionStart;
-        const end = inputElement.selectionEnd;
         const currentValue = inputElement.value;
         let valueChanged = false;
 
         if (key === "Backspace") {
-          if (start === end && start > 0) {
-            inputElement.value =
-              currentValue.substring(0, start - 1) + currentValue.substring(end);
-            inputElement.selectionStart = inputElement.selectionEnd = start - 1;
-            valueChanged = true;
-          } else if (start < end) {
-            inputElement.value =
-              currentValue.substring(0, start) + currentValue.substring(end);
-            inputElement.selectionStart = inputElement.selectionEnd = start;
+          if (currentValue.length > 0) {
+            inputElement.value = currentValue.substring(0, currentValue.length - 1);
+            inputElement.selectionStart = inputElement.selectionEnd =
+              inputElement.value.length;
             valueChanged = true;
           }
         } else if (key === "Enter") {
           if (inputElement.tagName === "TEXTAREA") {
             inputElement.value =
-              currentValue.substring(0, start) +
-              "\n" +
-              currentValue.substring(end);
-            inputElement.selectionStart = inputElement.selectionEnd = start + 1;
+              currentValue + "\n";
+            inputElement.selectionStart = inputElement.selectionEnd =
+              inputElement.value.length;
             valueChanged = true;
           } else if (inputElement.form) {
             const form = inputElement.form;
@@ -449,21 +441,38 @@ export function useRemoteControl() {
             form.dispatchEvent(submitEvent);
           }
         } else if (key.length === 1 || key === " ") {
-          inputElement.value =
-            currentValue.substring(0, start) +
-            key +
-            currentValue.substring(end);
+          inputElement.value = currentValue + key;
           inputElement.selectionStart = inputElement.selectionEnd =
-            start + key.length;
+            inputElement.value.length;
           valueChanged = true;
         } else {
           console.log("Unhandled special key:", key);
         }
 
         if (valueChanged) {
-          inputElement.dispatchEvent(
-            new Event("input", { bubbles: true, cancelable: true })
-          );
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            "value"
+          )?.set;
+          const nativeTextAreaValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLTextAreaElement.prototype,
+            "value"
+          )?.set;
+          
+          const setter = inputElement.tagName === "TEXTAREA" 
+            ? nativeTextAreaValueSetter 
+            : nativeInputValueSetter;
+          
+          if (setter) {
+            setter.call(inputElement, inputElement.value);
+          }
+          
+          const inputEvent = new Event("input", { bubbles: true, cancelable: true });
+          inputElement.dispatchEvent(inputEvent);
+          
+          const changeEvent = new Event("change", { bubbles: true, cancelable: true });
+          inputElement.dispatchEvent(changeEvent);
+          
           const focusedSelector = getUniqueSelector(inputElement);
           newSocket.emit("report_focus_change", {
             roomId: assignedRoomCodeRef.current,
@@ -472,6 +481,31 @@ export function useRemoteControl() {
         }
       } else {
         console.log("Key input received, but no suitable element focused.");
+      }
+    });
+
+    newSocket.on("scroll", (data) => {
+      const deltaX = data.deltaX || 0;
+      const deltaY = data.deltaY || 0;
+      
+      const activeElement = document.activeElement;
+      const scrollableElement = activeElement && (
+        activeElement.scrollHeight > activeElement.clientHeight ||
+        activeElement.scrollWidth > activeElement.clientWidth
+      ) ? activeElement : window;
+      
+      if (scrollableElement === window) {
+        window.scrollBy({
+          left: deltaX,
+          top: deltaY,
+          behavior: 'auto'
+        });
+      } else {
+        scrollableElement.scrollBy({
+          left: deltaX,
+          top: deltaY,
+          behavior: 'auto'
+        });
       }
     });
 

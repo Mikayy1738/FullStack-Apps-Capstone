@@ -10,6 +10,25 @@ function HomePage({ onLogout, onViewVenue }) {
     loadVenues();
   }, []);
 
+  useEffect(() => {
+    const searchInput = document.querySelector('.search-input');
+    if (!searchInput) return;
+
+    const handleInputSync = (e) => {
+      if (e.target.value !== searchQuery) {
+        setSearchQuery(e.target.value);
+      }
+    };
+
+    searchInput.addEventListener('input', handleInputSync);
+    searchInput.addEventListener('change', handleInputSync);
+    
+    return () => {
+      searchInput.removeEventListener('input', handleInputSync);
+      searchInput.removeEventListener('change', handleInputSync);
+    };
+  }, [searchQuery]);
+
   const loadVenues = async () => {
     setLoading(true);
     try {
@@ -27,11 +46,16 @@ function HomePage({ onLogout, onViewVenue }) {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (e) => {
+    if (e) {
+      e.preventDefault();
+    }
     setLoading(true);
     try {
-      const url = searchQuery 
-        ? `/api/venues?search=${encodeURIComponent(searchQuery)}`
+      const searchInput = document.querySelector('.search-input');
+      const query = searchInput ? searchInput.value : searchQuery;
+      const url = query 
+        ? `/api/venues?search=${encodeURIComponent(query)}`
         : "/api/venues";
       const response = await fetch(url, {
         credentials: "include"
@@ -39,6 +63,9 @@ function HomePage({ onLogout, onViewVenue }) {
       if (response.ok) {
         const data = await response.json();
         setVenues(data);
+        if (searchInput) {
+          setSearchQuery(query);
+        }
       }
     } catch (error) {
       console.error("Error searching venues:", error);
@@ -73,7 +100,7 @@ function HomePage({ onLogout, onViewVenue }) {
             className="search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch(e)}
           />
           <button onClick={handleSearch} className="search-button">Search</button>
         </div>
