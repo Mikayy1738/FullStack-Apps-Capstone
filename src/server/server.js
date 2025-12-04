@@ -114,6 +114,16 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('scroll', (data) => {
+    const room = rooms.get(data.roomId);
+    if (room) {
+      socket.to(data.roomId).emit('scroll', {
+        deltaX: data.deltaX || 0,
+        deltaY: data.deltaY || 0
+      });
+    }
+  });
+
   socket.on('report_focus_change', (data) => {
     const room = rooms.get(data.roomId);
     if (room) {
