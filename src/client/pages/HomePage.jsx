@@ -4,20 +4,47 @@ import TagContainer from "../components/TagContainer";
 import VenueCard from "../components/VenueCard";
 
 function HomePage({ onLogout, onViewVenue }) {
+  const [fullVenues, setFullVenues] = useState([]);
   const [venues, setVenues] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const filterTagReducer = (state, {action, payload}) => {
+    const acceptedActions = ["remove", "add", "clear"];
+    if (!acceptedActions.includes(action)){
+      return state;
+    }
+    let newFilters = [...state.filters];
+    switch(action){
+      case("remove"):
+        newFilters.splice(newFilters.findIndex((tag) => tag.id === payload.id), 1);
+        break;
+      case("add"):
+        newFilters.push(payload);
+        break;
+      case("clear"):
+        newFilters = [];
+        break;
+      }
+      return {...state, filters: newFilters};
+  }
+
+  const [{filters}, filterDispatch] = useReducer(filterTagReducer, {filters: []})
+
+  const tagClickToFilterFactory = (tag) => {
+    return () => { 
+      setVenues((currentVenues) => currentVenues.filter(({tagIDs}) => tagIDs.includes(tag.id)));
+      filterDispatch({action: "add", payload: {...tag, onClick: () => {
+        filterDispatch({action: "remove", payload: tag});
+        setVenues(fullVenues);
+      }}})
+    }
+  }
+
   useEffect(() => {
     loadVenues();
   }, []);
-
-   const tagClickToFilterFactory = (tag) => {
-    return () => { 
-      setVenues((currentVenues) => currentVenues.filter(({tagIDs}) => tagIDs.includes(tag.id)));
-    }
-   }
-
+  
   const loadVenues = async () => {
     setLoading(true);
     try {
@@ -27,6 +54,7 @@ function HomePage({ onLogout, onViewVenue }) {
       if (response.ok) {
         const data = await response.json();
         setVenues(data);
+        setFullVenues(data);
       }
     } catch (error) {
       console.error("Error loading venues:", error);
@@ -47,6 +75,7 @@ function HomePage({ onLogout, onViewVenue }) {
       if (response.ok) {
         const data = await response.json();
         setVenues(data);
+        setFullVenues(data);
       }
     } catch (error) {
       console.error("Error searching venues:", error);
@@ -85,6 +114,7 @@ function HomePage({ onLogout, onViewVenue }) {
           />
           <button onClick={handleSearch} className="search-button">Search</button>
         </div>
+        <TagContainer tags={filters} />
         {loading ? (
           <div className="loading">Loading venues...</div>
         ) : filteredVenues.length === 0 ? (
