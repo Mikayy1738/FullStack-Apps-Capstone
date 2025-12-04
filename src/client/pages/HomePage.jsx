@@ -123,7 +123,7 @@ function HomePage({ onLogout, onViewVenue }) {
           </div>
         ) : (
           <div className="venues-grid">
-            {filteredVenues.map(venue => <VenueCard venue={venue} tagFilterFn={tagClickToFilterFactory}/>)}
+            {filteredVenues.map(venue => <VenueCard venue={venue} tagFilterFn={tagClickToFilterFactory} onViewVenue={onViewVenue}/>)}
           </div>
         )}
       </main>
