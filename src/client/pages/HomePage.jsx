@@ -112,13 +112,6 @@ function HomePage({ onLogout, onViewVenue }) {
     }
   };
 
-  const filteredVenues = venues.filter(venue => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return venue.name.toLowerCase().includes(query) || 
-           venue.location.toLowerCase().includes(query);
-  });
-
   return (
     <div className="home-page">
       <header className="home-header">
@@ -145,13 +138,13 @@ function HomePage({ onLogout, onViewVenue }) {
         <TagContainer tags={filters} />
         {loading ? (
           <div className="loading">Loading venues...</div>
-        ) : filteredVenues.length === 0 ? (
+        ) : venues.length === 0 ? (
           <div className="empty-state">
             <p>No venues found. {searchQuery ? "Try a different search." : "No venues available."}</p>
           </div>
         ) : (
           <div className="venues-grid">
-            {filteredVenues.map((venue, i) => <VenueCard venue={venue} tagFilterFn={tagClickToFilterFactory} onViewVenue={onViewVenue} key={i}/>)}
+            {venues.map((venue, i) => <VenueCard venue={venue} tagFilterFn={tagClickToFilterFactory} onViewVenue={onViewVenue} key={i}/>)}
           </div>
         )}
       </main>
