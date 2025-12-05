@@ -67,7 +67,6 @@ tagAPI.put('/add', async (req, res) => {
       return;
     }
     await db.transact((doc) => {
-      console.log(doc.tag)
       const venueIndex = doc.venue.findIndex(venue => venue.id === venueID);
       doc.venue[venueIndex].tagIDs.push(tagID);
       
@@ -81,6 +80,28 @@ tagAPI.put('/add', async (req, res) => {
     res.sendStatus(500);
   }
 });
+
+tagAPI.post("/upsert", async (req, res) => {
+  const {name, venueID} = req.body;
+  try{
+    let dbTag = await db.findOneBy('tag', {name});
+    if (!dbTag){
+      dbTag = await db.insertOne('tag', {name, color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, "0")}`, venueIDs: []});
+    }
+    const tagID = dbTag.id;
+    await db.transact((doc) => {
+      const venueIndex = doc.venue.findIndex(venue => venue.id === venueID);
+      doc.venue[venueIndex].tagIDs.push(tagID);
+      
+      const tagIndex = doc.tag.findIndex(tag => tag.id === tagID);
+      doc.tag[tagIndex].venueIDs.push(venueID);
+    });
+  }
+  catch(e){
+    console.log(e.message);
+    res.sendStatus(500);
+  }
+})
 
 tagAPI.get("/list", async (req, res) => {
   try{

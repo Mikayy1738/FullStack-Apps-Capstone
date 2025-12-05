@@ -1,6 +1,7 @@
 import "../App.css";
 import { useState } from "react";
 import TagContainer from "./TagContainer";
+import TagCreator from "./TagCreator";
 
 const VenueDetailsOverlay = ({venue, visibility, onClose}) => {
   if (!venue){return <></>}
@@ -88,9 +89,9 @@ const VenueDetailsOverlay = ({venue, visibility, onClose}) => {
         <div className="venue-header">
           <div className="reviews-header">
             <h3>Tags</h3>
-          </div>
+          </div >
           <TagContainer tags={venue.tags}/>
-          
+          <TagCreator venueID={venue.id}/>
         </div>
         {venue.googleReviews && venue.googleReviews.length > 0 && (
         <div className="reviews-section">
