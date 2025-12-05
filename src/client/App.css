@@ -641,7 +641,7 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
   display: none;
-  z-index: 9999;
+  z-index: 10000;
   transition: background-color 0.1s ease;
 }
 
