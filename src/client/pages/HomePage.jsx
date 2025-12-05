@@ -132,7 +132,7 @@ function HomePage({ onLogout }) {
   };
   return (
     <div className="home-page" >
-      <VenueDetailsOverlay venue={detailedVenue} visibility={!!detailedVenue} onClose={onClose}/>
+      <VenueDetailsOverlay venue={detailedVenue} visibility={!!detailedVenue} onClose={onClose} />
       <header className="home-header">
         <h1>Venue Reviews</h1>
         <nav>

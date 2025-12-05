@@ -81,6 +81,23 @@ tagAPI.put('/add', async (req, res) => {
   }
 });
 
+tagAPI.patch("/remove", async (req, res) => {
+  const {venueID, tagID} = req.body;
+  try{
+    await db.transact((doc) => {
+      const venueIndex = doc.venue.findIndex(venue => venue.id === venueID);
+      doc.venue[venueIndex].tagIDs.splice(doc.venue[venueIndex].tagIDs.findIndex((t) => t.id === tagID), 1);
+      
+      const tagIndex = doc.tag.findIndex(tag => tag.id === tagID);
+      doc.tag[tagIndex].venueIDs.splice(doc.tag[tagIndex].venueIDs.findIndex(v => v.id === venueID), 1);
+    });
+  }
+  catch(e){
+    console.log(e.message);
+    res.sendStatus(500);
+  }
+})
+
 tagAPI.post("/upsert", async (req, res) => {
   const {name, venueID} = req.body;
   try{

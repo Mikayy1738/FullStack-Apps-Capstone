@@ -2,6 +2,7 @@ import "../App.css";
 import { useState } from "react";
 import TagContainer from "./TagContainer";
 import TagCreator from "./TagCreator";
+import axios from "axios";
 
 const VenueDetailsOverlay = ({venue, visibility, onClose}) => {
   if (!venue){return <></>}
@@ -29,6 +30,10 @@ const VenueDetailsOverlay = ({venue, visibility, onClose}) => {
       return { [rating]: getTopReviewsByStar(rating) };
     }
   };
+
+  const handleRemove = async (tagID) => {
+    axios.patch("/api/tag/remove", {tagID, venueID: venue.id});
+  }
 
   return (
     <div 
@@ -90,7 +95,7 @@ const VenueDetailsOverlay = ({venue, visibility, onClose}) => {
           <div className="reviews-header">
             <h3>Tags</h3>
           </div >
-          <TagContainer tags={venue.tags}/>
+          <TagContainer tags={venue.tags.map((tag) => ({...tag, onClick: () => {handleRemove(tag.id)}}))}/>
           <TagCreator venueID={venue.id}/>
         </div>
         {venue.googleReviews && venue.googleReviews.length > 0 && (
