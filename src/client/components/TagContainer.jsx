@@ -1,6 +1,6 @@
 import Tag from "./Tag";
 
-const TagContainer = ({tags}) => {
+const TagContainer = ({tags = []}) => {
   return (
     <div style={{display: "grid", grid:"auto-flow dense / repeat(4, 1fr)", columnGap: 3, margin: "4px auto", rowGap: 3}}>
       {

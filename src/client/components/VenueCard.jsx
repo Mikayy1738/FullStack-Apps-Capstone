@@ -1,7 +1,7 @@
 import TagContainer from "./TagContainer";
 
 const VenueCard = ({venue, tagFilterFn, onViewVenue}) => {
-  for (let tag of venue.tags){
+  for (let tag of venue.tags || []){
     tag.onClick = tagFilterFn(tag)
   }
   return (

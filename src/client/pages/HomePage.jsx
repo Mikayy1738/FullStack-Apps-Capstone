@@ -2,12 +2,31 @@ import { useState, useEffect, useReducer } from "react";
 import "../App.css";
 import TagContainer from "../components/TagContainer";
 import VenueCard from "../components/VenueCard";
+import VenueDetailsOverlay from "../components/VenueDetailsOverlay";
 
-function HomePage({ onLogout, onViewVenue }) {
+function HomePage({ onLogout }) {
   const [fullVenues, setFullVenues] = useState([]);
   const [venues, setVenues] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [detailedVenue, setDetailedVenue] =  useState(null);
+
+  const onViewVenue = async (id) => {
+    try {
+      const venueRes = await fetch(`/api/venues/${id}`, { credentials: "include" });
+
+      if (venueRes.ok) {
+        const venueData = await venueRes.json();
+        setDetailedVenue(venueData)
+      }
+    } catch (error) {
+      console.error("Error loading venue details:", error);
+    }
+  }
+
+  const onClose = () => {
+    setDetailedVenue(null);
+  }
 
   const filterTagReducer = (state, {action, payload}) => {
     const acceptedActions = ["remove", "add", "clear"];
@@ -111,9 +130,9 @@ function HomePage({ onLogout, onViewVenue }) {
       setLoading(false);
     }
   };
-
   return (
-    <div className="home-page">
+    <div className="home-page" >
+      <VenueDetailsOverlay venue={detailedVenue} visibility={!!detailedVenue} onClose={onClose}/>
       <header className="home-header">
         <h1>Venue Reviews</h1>
         <nav>

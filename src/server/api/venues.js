@@ -85,9 +85,34 @@ venuesAPI.get("/", async (req, res) => {
 });
 
 venuesAPI.get("/:id", async (req, res) => {
+  
   try {
     const { id } = req.params; // This will be a Google Place ID
-    res.send(await db.findOneBy('venue', {id}));
+
+    if (!API_KEY) {
+      console.error('GOOGLE_PLACES_API_KEY is not set');
+      res.status(500).json({ error: 'API key not configured' });
+      return;
+    }
+
+    // Fetch venue details from Google Places API
+    const googleUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&key=${API_KEY}`;
+    const response = await axios.get(googleUrl);
+
+    if (response.data.status !== 'OK') {
+      console.error('Google Places API error:', response.data.status);
+      res.status(404).json({ error: 'Venue not found' });
+      return;
+    }
+
+    const place = response.data.result;
+    console.log(place.review)
+
+    await db.upsertOne('venue', {id}, {googleReviews : place.reviews})
+
+    const dbVenue = await db.findOneBy('venue', {id})
+    
+    res.send(dbVenue);
   } catch (e) {
     console.log(e.message);
     res.sendStatus(500);
