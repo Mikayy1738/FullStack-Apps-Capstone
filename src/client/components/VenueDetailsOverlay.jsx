@@ -1,5 +1,5 @@
 import "../App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TagContainer from "./TagContainer";
 import TagCreator from "./TagCreator";
 import axios from "axios";
@@ -31,6 +31,17 @@ const VenueDetailsOverlay = ({venue, visibility, onClose, handleRemoveTag, handl
     }
   };
 
+  useEffect(() => {
+    if (visibility) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [visibility]);
+
   return (
     <div 
       style={{
@@ -45,13 +56,16 @@ const VenueDetailsOverlay = ({venue, visibility, onClose, handleRemoveTag, handl
       visibility: visibility ? "auto" : "hidden"
       }}>
       <div 
+        data-venue-overlay-scrollable="true"
         style={{
         background: "#eee",
         width: "90%",
-        height: "100%",
+        height: "calc(100% - 50px)",
         marginTop: 50,
         padding: 20,
-        borderRadius: "12px 12px 0px 0px"
+        borderRadius: "12px 12px 0px 0px",
+        overflowY: "auto",
+        overflowX: "hidden"
       }}>
         <div 
           style={{
@@ -120,7 +134,7 @@ const VenueDetailsOverlay = ({venue, visibility, onClose, handleRemoveTag, handl
                 );
               })}
             </div>
-            <div className="reviews-list" style={{overflow: "hidden scroll"}}>
+            <div className="reviews-list" style={{overflowY: "auto", overflowX: "hidden"}}>
               {Object.entries(getReviewsByCategory()).map(([starRating, categoryReviews]) => (
                 <div key={starRating} className="star-category-section">
                   {selectedStarFilter === "all" && (

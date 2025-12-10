@@ -488,6 +488,16 @@ export function useRemoteControl() {
       const deltaX = data.deltaX || 0;
       const deltaY = data.deltaY || 0;
       
+      const venueOverlayScrollable = document.querySelector('[data-venue-overlay-scrollable="true"]');
+      if (venueOverlayScrollable && venueOverlayScrollable.offsetParent !== null) {
+        venueOverlayScrollable.scrollBy({
+          left: deltaX,
+          top: deltaY,
+          behavior: 'auto'
+        });
+        return;
+      }
+      
       const activeElement = document.activeElement;
       const scrollableElement = activeElement && (
         activeElement.scrollHeight > activeElement.clientHeight ||
